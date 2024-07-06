@@ -1,4 +1,5 @@
+gunicorn
 requests
 pymongo
-Flask
+flask
 uuid
