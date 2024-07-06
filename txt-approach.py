@@ -52,20 +52,20 @@ def process(update):
             elif update['message']['text'] == '/FILE' and update['message']['from']['id'] == ADMIN:
                 voice()
             elif 'reply_to_message' in update['message'] and 'voice' in update['message']['reply_to_message'] and update['message']['chat']['type'] == 'private':
-                with open('voices.txt', 'r') as file:
+                with open('assets/voices.txt', 'r') as file:
                     lines = file.readlines()
                     updated_lines = [line for line in lines if update['message']['reply_to_message']['voice']['file_id'] not in line]
-                with open('voices.txt', 'w') as file:
+                with open('assets/voices.txt', 'w') as file:
                     file.write(f"{update['message']['reply_to_message']['voice']['file_id']} {0} {update['message']['from']['first_name'].split()[0]} {update['message']['text']}\n")
                     file.writelines(updated_lines)
                 requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",json={'chat_id': update['message']['from']['id'],'text': '*Done!*', 'parse_mode': 'Markdown'})
-                git_update('voices.txt')
+                git_update('assets/voices.txt')
     elif 'inline_query' in update:
         if update['inline_query']['from']['id'] not in AUTHORIZED_USER_IDS:
             results = [{'type': 'article','title': "Access denied!",'input_message_content': {'message_text': "*Contact* ➡️ @boot\_to\_root",'parse_mode': 'Markdown'}}]
             requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/answerInlineQuery", data={'inline_query_id': update['inline_query']['id'],'results': json.dumps(results)})
             return
-        with open('voices.txt', 'r') as file:
+        with open('assets/voices.txt', 'r') as file:
             lines = file.readlines()
         voices = [line for line in lines if update['inline_query']['query'].lower() in ' '.join(line.split()[3:]).lower()]
         filtered_voices = sorted(voices, key=lambda line: int(line.split()[1]), reverse=True)
@@ -79,14 +79,14 @@ def process(update):
         if update['callback_query']['data'].isdigit():
             callback(update['callback_query']['from']['id'], int(update['callback_query']['data']), update['callback_query']['message']['message_id'])
         else:
-            with open('voices.txt', 'r') as file:
+            with open('assets/voices.txt', 'r') as file:
                 voices1 = file.readlines()
             for voice1 in voices1:
                 if ' '.join(voice1.split()[3:]) == update['callback_query']['data']:
                     requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendVoice",json={'chat_id': update['callback_query']['from']['id'], 'voice': voice1.split()[0]})
 
 def callback(user_id, limit, state):
-    with open('voices.txt', 'r') as file:
+    with open('assets/voices.txt', 'r') as file:
         lines = file.readlines()
     reply_markup = {'inline_keyboard' : [[{'text': "######################", 'callback_data': 'xay'}]]}
     counter = 0
@@ -116,13 +116,13 @@ def callback(user_id, limit, state):
 
 
 def send_voices():
-    with open('voices.txt', 'r') as file:
+    with open('assets/voices.txt', 'r') as file:
         lines = file.readlines()
     for line in lines:
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendVoice",json={'chat_id': ADMIN, 'voice': line.split()[0], 'caption': line})
 
 def voice():
-    with open('voices.txt', 'r') as file:
+    with open('assets/voices.txt', 'r') as file:
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",params={'chat_id': ADMIN},files={'document': ('voices.txt', io.StringIO(''.join(file.readlines())))})
     file.close()
     return
